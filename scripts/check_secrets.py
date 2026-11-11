@@ -19,7 +19,7 @@ FORBIDDEN_NAMES = re.compile(r"(^|/)(\.env|credentials)$|\.(p8|pem|key)$|^docs/"
 SECRET_PATTERNS = {
     "private key block": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
     "AWS access key id": re.compile(r"\b(AKIA|ASIA)[0-9A-Z]{16}\b"),
-    "AWS secret access key": re.compile(r"aws_secret_access_key\s*=\s*\S{20,}", re.I),
+    "AWS secret access key": re.compile(r"aws_secret_access_key[ \t]*[=:][ \t]*[A-Za-z0-9/+]{40}", re.I),
     "Snowflake password": re.compile(r"^\s*password\s*:", re.I | re.M),
 }
 

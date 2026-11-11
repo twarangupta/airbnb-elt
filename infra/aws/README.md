@@ -8,7 +8,7 @@ What we create, and who uses it:
 |---|---|---|---|
 | S3 bucket | `airbnb-elt-raw-<your-initials>-<4 random digits>` | everything | 1 |
 | IAM policy | `airbnb-elt-landing-write` (file: `iam_policy_landing_write.json`) | the landing script on your laptop | 1 |
-| IAM user | `airbnb-elt-lander` (no console access, one access key) | the landing script on your laptop | 1 |
+| IAM user | `airbnb-elt-lander` (no console access, one access key kept in `.env`) | the landing script on your laptop | 1 |
 | IAM policy | `airbnb-elt-snowflake-read` (file: `iam_policy_snowflake_read.json`) | Snowflake | 2 |
 | IAM role | `airbnb-elt-snowflake-role` (trust policy: `iam_trust_policy_snowflake.template.json`) | Snowflake, through the storage integration | 2 |
 
@@ -21,7 +21,7 @@ This project runs on an AWS free-plan account. The free plan assigns a project's
 The rule that matters: S3 and Snowflake must be in the SAME cloud and SAME region. If they differ, every COPY INTO pulls data across regions and AWS charges data transfer. So:
 
 - AWS console region selector: Asia Pacific (Sydney).
-- `aws configure`: default region `ap-southeast-2`.
+- `.env`: `AWS_DEFAULT_REGION=ap-southeast-2` (the variable boto3 reads).
 - `.env`: `AWS_REGION=ap-southeast-2`.
 - Phase 2, Snowflake trial sign-up: cloud **AWS**, region **Asia Pacific (Sydney)**.
 
@@ -56,15 +56,21 @@ s3://<bucket>/raw/<city>/snapshot_date=YYYY-MM-DD/calendar.csv.gz
 1. IAM, Policies, Create policy, JSON tab. Paste `iam_policy_landing_write.json`, replace both `BUCKET_NAME` with your bucket name. Name it `airbnb-elt-landing-write`.
 2. IAM, Users, Create user `airbnb-elt-lander`. Do NOT tick console access. Attach only the policy above.
 3. Open the user, Security credentials, Create access key, use case "Local code". Download the CSV once.
-4. Store the key in your AWS credentials file, not in the repo. Either install AWS CLI v2 and run `aws configure --profile airbnb-elt-lander`, or create `%USERPROFILE%\.aws\credentials` by hand:
+4. Put the key in the project's `.env` file (gitignored, never committed):
 
 ```
-[airbnb-elt-lander]
-aws_access_key_id = <yours>
-aws_secret_access_key = <yours>
+AWS_ACCESS_KEY_ID=<from the CSV>
+AWS_SECRET_ACCESS_KEY=<from the CSV>
+AWS_REGION=ap-southeast-2
+AWS_DEFAULT_REGION=ap-southeast-2
+S3_BUCKET=<your bucket name>
 ```
 
-The landing script reads `AWS_PROFILE=airbnb-elt-lander` from `.env` and boto3 finds the key itself.
+5. Delete the downloaded CSV (or move it outside OneDrive). Never paste the key into chat, code or any tracked file.
+
+The Makefile loads `.env` and exports it, and boto3 (the AWS SDK for Python) reads `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_DEFAULT_REGION` from the environment by itself. The landing script never prints them. `make check-secrets` (also run in CI) fails if `.env` is ever tracked by git.
+
+Note: the repo folder is synced by OneDrive, so `.env` is also stored in your OneDrive. That is accepted here because this key can only write and read `raw/` in one bucket; rotate it in IAM if it is ever exposed.
 
 ## Step 5. Snowflake read policy and role (do this in Phase 2, not now)
 
