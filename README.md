@@ -4,7 +4,7 @@
 
 A batch ELT pipeline that loads Inside Airbnb listings, hosts, calendar and review data from AWS S3 into Snowflake, transforms it with dbt into Bronze, Silver and Gold layers and a star schema, keeps SCD Type 2 history of hosts and listings with dbt snapshots, and builds marts for price, availability and reviews per neighbourhood.
 
-Status: work in progress. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: work in progress (Phase 0 done: infrastructure plan, dbt skeleton, CI).
 
 ## Architecture
 
@@ -31,7 +31,6 @@ ingestion/          landing script (Phase 1)
 dbt/                dbt project (models, snapshots, macros, tests)
 scripts/            helper scripts (secret check)
 .github/workflows/  CI: secret check, sqlfluff lint, dbt deps and parse
-docs/               learning guide, glossary, progress
 ```
 
 ## Getting started

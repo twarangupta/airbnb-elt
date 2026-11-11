@@ -31,3 +31,6 @@ Thumbs.db
 # Assistant tooling (not part of the project)
 .claude/
 CLAUDE.md
+
+# Private study notes (never committed)
+docs/

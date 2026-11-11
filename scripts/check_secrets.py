@@ -12,7 +12,8 @@ import sys
 from pathlib import Path
 
 # Files that must never be tracked, whatever they contain.
-FORBIDDEN_NAMES = re.compile(r"(^|/)(\.env|credentials)$|\.(p8|pem|key)$")
+# docs/ holds private study notes: only the path is checked, never the content.
+FORBIDDEN_NAMES = re.compile(r"(^|/)(\.env|credentials)$|\.(p8|pem|key)$|^docs/")
 
 # Text patterns that mean a real secret was pasted into a file.
 SECRET_PATTERNS = {
