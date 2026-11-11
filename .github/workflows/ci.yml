@@ -46,6 +46,12 @@ jobs:
       - name: Check no secrets are tracked
         run: python scripts/check_secrets.py
 
+      - name: Lint Python with ruff
+        run: ruff check ingestion scripts tests
+
+      - name: Run Python unit tests
+        run: python -m pytest -q tests
+
       - name: Lint SQL with sqlfluff
         run: sqlfluff lint infra/snowflake dbt/models dbt/snapshots dbt/tests dbt/analyses
 

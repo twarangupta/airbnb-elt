@@ -4,7 +4,7 @@
 
 A batch ELT pipeline that loads Inside Airbnb listings, hosts, calendar and review data from AWS S3 into Snowflake, transforms it with dbt into Bronze, Silver and Gold layers and a star schema, keeps SCD Type 2 history of hosts and listings with dbt snapshots, and builds marts for price, availability and reviews per neighbourhood.
 
-Status: work in progress (Phase 0 done: infrastructure plan, dbt skeleton, CI).
+Status: work in progress (Phase 1 done: raw London snapshot landed in S3; 36.2M records in 3 files).
 
 ## Architecture
 
@@ -27,7 +27,8 @@ AWS S3, Snowflake, dbt Core (dbt-snowflake, dbt_utils), Python 3.11, Make, GitHu
 ```
 infra/aws/          IAM policy files and S3 setup steps
 infra/snowflake/    Snowflake setup SQL (warehouse, database, schemas, role, service user)
-ingestion/          landing script (Phase 1)
+ingestion/          landing script: Inside Airbnb to s3://.../raw/<city>/snapshot_date=YYYY-MM-DD/
+tests/              Python unit tests (pytest)
 dbt/                dbt project (models, snapshots, macros, tests)
 scripts/            helper scripts (secret check)
 .github/workflows/  CI: secret check, sqlfluff lint, dbt deps and parse
@@ -39,4 +40,9 @@ scripts/            helper scripts (secret check)
 2. Copy `.env.example` to `.env` and fill in your own values (never commit `.env`).
 3. Install dbt packages and validate the project: `make deps parse`
 4. Run the same checks as CI: `make ci`
-5. AWS setup: see [infra/aws/README.md](infra/aws/README.md).
+5. Land the raw files in S3 (needs AWS values in `.env`): `make land-old`
+6. AWS setup: see [infra/aws/README.md](infra/aws/README.md).
+
+## Data and licence
+
+Data: [Inside Airbnb](https://insideairbnb.com/get-the-data/) (London, snapshots 2026-06-19 and 2026-09-17), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Files are landed unchanged in a private S3 bucket and are not redistributed by this repository.
