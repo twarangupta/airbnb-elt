@@ -1,11 +1,11 @@
-# Continuous integration: runs on every push and pull request to main.
+# Continuous integration: runs on every push to dev or main, and on pull requests to main.
 # Today it needs NO Snowflake account: it lints SQL, checks for secrets and
 # validates the dbt project with `dbt parse`, which never opens a connection.
 name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
     branches: [main]
 
