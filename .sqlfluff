@@ -1,0 +1,20 @@
+# sqlfluff settings (SQL linter). Read by `make lint` and by CI.
+[sqlfluff]
+dialect = snowflake
+# Jinja templater: renders {{ }} and {% %} without connecting to Snowflake.
+# apply_dbt_builtins fakes dbt functions like ref(), source(), config(), var().
+templater = jinja
+max_line_length = 120
+# Keep the rule set small and explainable; grow it as models arrive.
+exclude_rules = LT05
+
+[sqlfluff:templater:jinja]
+apply_dbt_builtins = True
+load_macros_from_path = dbt/macros
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = upper
+
+[sqlfluff:indentation]
+indent_unit = space
+tab_space_size = 4

@@ -1,0 +1,56 @@
+# Continuous integration: runs on every push and pull request to main.
+# Today it needs NO Snowflake account: it lints SQL, checks for secrets and
+# validates the dbt project with `dbt parse`, which never opens a connection.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Read-only access to the repo is all these checks need.
+permissions:
+  contents: read
+
+jobs:
+  lint-and-parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Dummy values: profiles.yml reads these with env_var(), and dbt parse
+    # needs them to exist but never uses them to connect.
+    env:
+      SNOWFLAKE_ACCOUNT: dummy-account
+      SNOWFLAKE_USER: DUMMY_USER
+      SNOWFLAKE_PRIVATE_KEY_PATH: /tmp/dummy_key.p8
+      DBT_PROJECT_DIR: dbt
+      DBT_PROFILES_DIR: dbt
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.11 (with pip cache)
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install pinned packages
+        run: pip install -r requirements-dev.txt
+
+      - name: Check no secrets are tracked
+        run: python scripts/check_secrets.py
+
+      - name: Lint SQL with sqlfluff
+        run: sqlfluff lint infra/snowflake dbt/models dbt/snapshots dbt/tests dbt/analyses
+
+      - name: Install dbt packages
+        run: dbt deps
+
+      - name: Validate dbt project (no connection)
+        run: dbt parse --target ci

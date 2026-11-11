@@ -1,0 +1,3 @@
+# Everything in requirements.txt, plus tools used only for checks (local and CI).
+-r requirements.txt
+sqlfluff==4.5.0
