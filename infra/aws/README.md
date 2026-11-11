@@ -14,16 +14,16 @@ What we create, and who uses it:
 
 Two separate identities on purpose: the laptop can write but Snowflake can only read. Neither can delete. That is least privilege: each identity gets only what its job needs.
 
-## Step 1. Region: Asia Pacific (Mumbai) `ap-south-1`, everywhere
+## Step 1. Region: Asia Pacific (Sydney) `ap-southeast-2`, everywhere
 
-This project runs on an AWS free-plan account. On the free plan, a project's region is fixed when the project is created, and this project was created in **Asia Pacific (Mumbai) `ap-south-1`** (close to us, so uploads and the console are fast). Using other regions would need a paid upgrade, which we are not doing.
+This project runs on an AWS free-plan account. The free plan assigns a project's region from the account's contact-address country, and for Asia Pacific that is **Asia Pacific (Sydney) `ap-southeast-2`**. Any other region needs an upgrade to the paid plan, which we are not doing.
 
 The rule that matters: S3 and Snowflake must be in the SAME cloud and SAME region. If they differ, every COPY INTO pulls data across regions and AWS charges data transfer. So:
 
-- AWS console region selector: Asia Pacific (Mumbai).
-- `aws configure`: default region `ap-south-1`.
-- `.env`: `AWS_REGION=ap-south-1`.
-- Phase 2, Snowflake trial sign-up: cloud **AWS**, region **Asia Pacific (Mumbai)**.
+- AWS console region selector: Asia Pacific (Sydney).
+- `aws configure`: default region `ap-southeast-2`.
+- `.env`: `AWS_REGION=ap-southeast-2`.
+- Phase 2, Snowflake trial sign-up: cloud **AWS**, region **Asia Pacific (Sydney)**.
 
 ## Step 2. Cost guard before anything else
 
@@ -37,7 +37,7 @@ The free plan gives 100 USD of credits for a limited period; when the credits ru
 S3, Create bucket:
 
 - Bucket name: `airbnb-elt-raw-<your-initials>-<4 random digits>` (bucket names are global across all AWS customers, so it must be unique). Put it in `.env` as `S3_BUCKET`.
-- Region: Asia Pacific (Mumbai) `ap-south-1`.
+- Region: Asia Pacific (Sydney) `ap-southeast-2`.
 - Object Ownership: ACLs disabled (default).
 - Block all public access: ON (default). Nobody on the internet should read this bucket.
 - Bucket Versioning: Enable. If a file is ever overwritten by mistake, the old version is still there.
