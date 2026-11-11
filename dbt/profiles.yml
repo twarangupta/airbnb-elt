@@ -1,0 +1,19 @@
+# Connection settings for dbt. This file is safe to commit because it holds
+# NO secrets: every value comes from an environment variable (loaded from
+# your gitignored .env by the Makefile). Login is key-pair, not password.
+airbnb_elt:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER', 'DBT_SVC') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'TRANSFORMER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'AIRBNB_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'AIRBNB') }}"
+      schema: "{{ env_var('DBT_SCHEMA', 'SILVER') }}"
+      threads: 4
+      client_session_keep_alive: false
+      query_tag: airbnb_elt

@@ -1,0 +1,5 @@
+# Extra dbt packages (installed into dbt_packages/ by `dbt deps`).
+# dbt_utils gives us generate_surrogate_key, date_spine and extra tests.
+packages:
+  - package: dbt-labs/dbt_utils
+    version: [">=1.3.0", "<2.0.0"]

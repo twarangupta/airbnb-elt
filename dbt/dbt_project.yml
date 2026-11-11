@@ -1,0 +1,28 @@
+# dbt project config. dbt reads this file first on every command.
+name: airbnb_elt
+version: "1.0.0"
+config-version: 2
+
+# Which entry in profiles.yml holds the connection settings.
+profile: airbnb_elt
+
+# Where dbt looks for each kind of file (paths are relative to this folder).
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Folders dbt is allowed to delete with `dbt clean`.
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Folder-level defaults. Phase 3 adds Silver settings, Phase 5 adds Gold.
+models:
+  airbnb_elt:
+    silver:
+      +schema: silver
+    gold:
+      +schema: gold

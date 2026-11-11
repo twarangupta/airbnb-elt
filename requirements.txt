@@ -1,0 +1,10 @@
+# Pinned so every machine (laptop, CI) runs the same versions.
+# Install with: make install   (uses uv; plain `pip install -r requirements.txt` also works)
+# Note: installed with --only-binary :all: on Windows (a newer dbt-core patch pulled a
+# dependency that tried to compile from source and hung).
+dbt-core==1.12.0
+dbt-snowflake==1.12.5
+snowflake-connector-python==5.2.0
+boto3==1.44.0
+requests==2.34.2
+python-dotenv==1.2.4

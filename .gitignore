@@ -1,0 +1,33 @@
+# Secrets and local config (never commit)
+.env
+*.p8
+*.pem
+*.key
+.aws/
+credentials
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# dbt build output
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+logs/
+.user.yml
+
+# Downloaded raw data (lives in S3, not in git)
+data/
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Assistant tooling (not part of the project)
+.claude/
+CLAUDE.md
