@@ -4,6 +4,8 @@
 -- DO NOT RUN YET. We run this at the start of Phase 2, the day you
 -- activate the 30-day trial, so no trial days are wasted.
 -- Safe to rerun: every statement uses IF NOT EXISTS or is a GRANT.
+-- The trial account MUST be on AWS, region Asia Pacific (Sydney)
+-- (ap-southeast-2), the same region as the S3 bucket.
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
