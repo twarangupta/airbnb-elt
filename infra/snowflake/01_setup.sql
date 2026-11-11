@@ -77,7 +77,7 @@ CREATE SCHEMA IF NOT EXISTS AIRBNB.GOLD      COMMENT = 'Gold: star schema and ma
 -- ---------------------------------------------------------------------
 -- 6. Service user for dbt and the pipeline runner.
 --    TYPE = SERVICE: no password, no MFA prompt, key-pair login only.
---    Generate the key pair on your laptop first (Phase 2 shows how) and
+--    Generate the key pair on your laptop first with `make keypair` and
 --    paste ONLY the public key body below. The private key never leaves
 --    your laptop and never enters git.
 -- ---------------------------------------------------------------------

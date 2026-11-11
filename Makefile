@@ -20,7 +20,7 @@ PY_PATHS  := ingestion scripts tests
 SNAPSHOT_OLD ?= 2026-06-19
 SNAPSHOT_NEW ?= 2026-09-17
 
-.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new
+.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old
 
 help:            ## List targets
 	@grep -E '^[a-z_-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ :/'
@@ -63,6 +63,15 @@ land-old:        ## Land the OLD London snapshot (Phase 1)
 
 land-new:        ## Land the NEW London snapshot (Phase 4)
 	$(MAKE) land SNAPSHOT_DATE=$(SNAPSHOT_NEW)
+
+keypair:         ## Create the Snowflake key pair (private key outside the repo; prints public key)
+	$(PY) scripts/generate_snowflake_keypair.py
+
+load-raw:        ## COPY one landed snapshot into RAW: make load-raw SNAPSHOT_DATE=YYYY-MM-DD
+	$(PY) ingestion/load_raw.py --snapshot-date $(SNAPSHOT_DATE)
+
+load-raw-old:    ## COPY the OLD London snapshot into RAW (Phase 2)
+	$(MAKE) load-raw SNAPSHOT_DATE=$(SNAPSHOT_OLD)
 
 ci:              ## Run the same checks as GitHub Actions, locally
 	$(MAKE) check-secrets lint pylint test deps

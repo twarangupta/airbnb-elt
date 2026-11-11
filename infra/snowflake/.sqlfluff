@@ -3,4 +3,7 @@
 # inconsistently. Layout rules are switched off for this folder only;
 # every other rule (keywords, references, ambiguity) still applies.
 [sqlfluff]
-exclude_rules = LT01, LT02, LT05
+# RF04: RAW columns mirror the CSV headers exactly, and some headers are
+#       keywords (date, source); they are renamed in dbt Silver models.
+# RF03: Snowflake's METADATA$ pseudo-columns cannot be table-qualified.
+exclude_rules = LT01, LT02, LT05, RF03, RF04
