@@ -60,22 +60,23 @@ GRANT USAGE, OPERATE ON WAREHOUSE AIRBNB_WH TO ROLE TRANSFORMER;
 GRANT USAGE, CREATE SCHEMA ON DATABASE AIRBNB TO ROLE TRANSFORMER;
 
 -- ---------------------------------------------------------------------
--- 5. Schemas, created BY the TRANSFORMER role so it owns them
+-- 5. Schemas, OWNED by the TRANSFORMER role
 --    (owner can create tables and views inside without extra grants).
+--    Created as SYSADMIN, then ownership handed to TRANSFORMER. We do NOT
+--    grant TRANSFORMER to your own login: on this trial the sign-up user
+--    is owned by an organisation-level role, so USERADMIN and SECURITYADMIN
+--    both get "User ... does not exist or not authorized". You still see
+--    everything, because SYSADMIN (and ACCOUNTADMIN) inherit TRANSFORMER.
 -- ---------------------------------------------------------------------
--- Give the admin user the role for this session so we can switch to it.
--- SECURITYADMIN (not USERADMIN): your own login user is owned by
--- ACCOUNTADMIN, so USERADMIN cannot see it; SECURITYADMIN has MANAGE GRANTS.
-SET my_user = CURRENT_USER();
-USE ROLE SECURITYADMIN;
-GRANT ROLE TRANSFORMER TO USER IDENTIFIER($my_user);
-
-USE ROLE TRANSFORMER;
-USE WAREHOUSE AIRBNB_WH;
+USE ROLE SYSADMIN;
 CREATE SCHEMA IF NOT EXISTS AIRBNB.RAW       COMMENT = 'Bronze: files loaded as-is by COPY INTO';
 CREATE SCHEMA IF NOT EXISTS AIRBNB.SILVER    COMMENT = 'Silver: cleaned, typed, deduplicated dbt models';
 CREATE SCHEMA IF NOT EXISTS AIRBNB.SNAPSHOTS COMMENT = 'dbt snapshots (SCD Type 2 history)';
 CREATE SCHEMA IF NOT EXISTS AIRBNB.GOLD      COMMENT = 'Gold: star schema and marts';
+GRANT OWNERSHIP ON SCHEMA AIRBNB.RAW       TO ROLE TRANSFORMER COPY CURRENT GRANTS;
+GRANT OWNERSHIP ON SCHEMA AIRBNB.SILVER    TO ROLE TRANSFORMER COPY CURRENT GRANTS;
+GRANT OWNERSHIP ON SCHEMA AIRBNB.SNAPSHOTS TO ROLE TRANSFORMER COPY CURRENT GRANTS;
+GRANT OWNERSHIP ON SCHEMA AIRBNB.GOLD      TO ROLE TRANSFORMER COPY CURRENT GRANTS;
 
 -- ---------------------------------------------------------------------
 -- 6. Service user for dbt and the pipeline runner.
@@ -98,7 +99,7 @@ GRANT ROLE TRANSFORMER TO USER DBT_SVC;
 -- ---------------------------------------------------------------------
 -- 7. Check
 -- ---------------------------------------------------------------------
-USE ROLE TRANSFORMER;
+USE ROLE SYSADMIN;   -- inherits TRANSFORMER, so it sees the schemas
 SHOW SCHEMAS IN DATABASE AIRBNB;
 SHOW WAREHOUSES LIKE 'AIRBNB_WH';
 
