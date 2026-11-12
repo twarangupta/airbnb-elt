@@ -4,7 +4,7 @@
 
 A batch ELT pipeline that loads Inside Airbnb listings, hosts, calendar and review data from AWS S3 into Snowflake, transforms it with dbt into Bronze, Silver and Gold layers and a star schema, keeps SCD Type 2 history of hosts and listings with dbt snapshots, and builds marts for price, availability and reviews per neighbourhood.
 
-Status: work in progress (Phase 1 done: raw London snapshot landed in S3; 36.2M records in 3 files).
+Status: work in progress. Phase 2 done: the 2026-06-19 London snapshot is loaded into Snowflake RAW (36,205,627 rows in 66 s on an X-SMALL warehouse), reconciled exactly against the row counts recorded at landing; a rerun skips every file.
 
 ## Architecture
 
@@ -41,7 +41,8 @@ scripts/            helper scripts (secret check)
 3. Install dbt packages and validate the project: `make deps parse`
 4. Run the same checks as CI: `make ci`
 5. Land the raw files in S3 (needs AWS values in `.env`): `make land-old`
-6. AWS setup: see [infra/aws/README.md](infra/aws/README.md).
+6. Snowflake setup: run `infra/snowflake/01_setup.sql` to `03_raw_tables.sql` (see comments in each), then load and reconcile: `make load-raw-old`
+7. AWS setup: see [infra/aws/README.md](infra/aws/README.md).
 
 ## Data and licence
 
