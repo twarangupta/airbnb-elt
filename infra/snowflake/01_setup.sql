@@ -64,8 +64,10 @@ GRANT USAGE, CREATE SCHEMA ON DATABASE AIRBNB TO ROLE TRANSFORMER;
 --    (owner can create tables and views inside without extra grants).
 -- ---------------------------------------------------------------------
 -- Give the admin user the role for this session so we can switch to it.
+-- SECURITYADMIN (not USERADMIN): your own login user is owned by
+-- ACCOUNTADMIN, so USERADMIN cannot see it; SECURITYADMIN has MANAGE GRANTS.
 SET my_user = CURRENT_USER();
-USE ROLE USERADMIN;
+USE ROLE SECURITYADMIN;
 GRANT ROLE TRANSFORMER TO USER IDENTIFIER($my_user);
 
 USE ROLE TRANSFORMER;
