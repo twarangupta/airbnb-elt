@@ -4,8 +4,9 @@
 -- DO NOT RUN YET. We run this at the start of Phase 2, the day you
 -- activate the 30-day trial, so no trial days are wasted.
 -- Safe to rerun: every statement uses IF NOT EXISTS or is a GRANT.
--- The trial account MUST be on AWS, region Asia Pacific (Sydney)
--- (ap-southeast-2), the same region as the S3 bucket.
+-- Trial account: AWS, region AWS_AP_SOUTHEAST_7 (Asia Pacific, Thailand).
+-- The S3 bucket is in ap-southeast-2 (Sydney), so loads cross regions:
+-- about 0.04 USD of AWS transfer per full load of ~0.41 GB (accepted).
 -- =====================================================================
 
 -- ---------------------------------------------------------------------

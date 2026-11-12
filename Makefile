@@ -9,6 +9,9 @@ export
 # The virtual environment lives OUTSIDE OneDrive so OneDrive does not try to
 # sync thousands of library files. Override with: make VENV=path/to/venv ...
 VENV ?= C:/dev/venvs/airbnb-elt
+# Base Python lives in C:/dev/python, not AppData: the Claude desktop app
+# virtualizes AppData, so a base interpreter there is invisible to your own terminal.
+PYTHON_BASE ?= C:/dev/python/cpython-3.11.16-windows-x86_64-none/python.exe
 PY   := $(VENV)/Scripts/python.exe
 DBT  := $(VENV)/Scripts/dbt.exe
 DBT_FLAGS := --project-dir dbt --profiles-dir dbt
@@ -26,7 +29,7 @@ help:            ## List targets
 	@grep -E '^[a-z_-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ :/'
 
 venv:            ## Create the Python 3.11 virtual environment (needs uv)
-	uv venv $(VENV) --python 3.11
+	uv venv $(VENV) --python $(PYTHON_BASE)
 
 install:         ## Install pinned Python packages into the venv
 	VIRTUAL_ENV=$(VENV) uv pip install --only-binary :all: -r requirements-dev.txt

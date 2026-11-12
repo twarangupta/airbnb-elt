@@ -23,7 +23,7 @@ The rule that matters: S3 and Snowflake must be in the SAME cloud and SAME regio
 - AWS console region selector: Asia Pacific (Sydney).
 - `.env`: `AWS_DEFAULT_REGION=ap-southeast-2` (the variable boto3 reads).
 - `.env`: `AWS_REGION=ap-southeast-2`.
-- Phase 2, Snowflake trial sign-up: cloud **AWS**, region **Asia Pacific (Sydney)**.
+- Snowflake: the trial was created in **AWS Asia Pacific (Thailand), `AWS_AP_SOUTHEAST_7`** (sign-up default). Loads from the Sydney bucket therefore cross regions, about 0.04 USD per full load of ~0.41 GB. Accepted to keep the trial.
 
 ## Step 2. Cost guard before anything else
 
@@ -80,3 +80,13 @@ This needs two values that only exist after the Snowflake trial is active and th
 2. Create role `airbnb-elt-snowflake-role`, trusted entity "AWS account", attach that policy. Copy its ARN.
 3. In Snowflake: `CREATE STORAGE INTEGRATION ... STORAGE_AWS_ROLE_ARN = '<that ARN>'`, then `DESC INTEGRATION`.
 4. Back in AWS, edit the role's trust policy using `iam_trust_policy_snowflake.template.json`, filling in `STORAGE_AWS_IAM_USER_ARN` and `STORAGE_AWS_EXTERNAL_ID` from step 3.
+
+### Step 5, Plan B: read-only IAM user for the stage (only if Plan A fails)
+
+On this AWS free-plan account, cross-account AssumeRole from a service in another region was refused in the MF project (Databricks). A Snowflake storage integration uses the same role pattern, so if `LIST @LONDON_STAGE` fails with an AssumeRole / access error even after the trust policy is set:
+
+1. IAM, Users, Create user `airbnb-elt-snowflake-reader`. No console access. Attach only `airbnb-elt-snowflake-read` (Get and List on `raw/`, nothing else).
+2. Create an access key ("Application running outside AWS"). Do not put it in `.env` or anywhere in the repo.
+3. Paste it ONLY into the Snowsight worksheet that runs `infra/snowflake/02b_stage_with_credentials.sql`, run it, then close the worksheet without saving the key.
+
+Trade-off: a long-lived key is stored (encrypted) in the stage definition instead of short-lived role credentials. Limited by the policy to read-only on `raw/` in one bucket; rotate it in IAM if exposed.
