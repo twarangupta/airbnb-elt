@@ -48,3 +48,11 @@ scripts/            helper scripts (secret check)
 ## Data and licence
 
 Data: [Inside Airbnb](https://insideairbnb.com/get-the-data/) (London, snapshots 2026-06-19 and 2026-09-17), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Files are landed unchanged in a private S3 bucket and are not redistributed by this repository.
+
+## Roadmap
+
+- Phase 4: SCD Type 2 snapshots of hosts and listings across two snapshots.
+- Phase 5: Gold star schema and marts, plus a Snowsight dashboard (screenshots in `images/`).
+- After Phase 5: export the small Gold marts to `exports/gold/*.parquet` with a manifest (row counts, export time, source query), so results survive the Snowflake trial.
+- Phase 6 and 7: orchestration, docs and lineage, CI, interview write-up.
+- Final: a public Streamlit dashboard (separate repo) reading the exported files, with no warehouse credentials. Data: Inside Airbnb (CC BY 4.0).
