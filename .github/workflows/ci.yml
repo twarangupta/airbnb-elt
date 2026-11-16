@@ -53,7 +53,7 @@ jobs:
         run: python -m pytest -q tests
 
       - name: Lint SQL with sqlfluff
-        run: sqlfluff lint infra/snowflake dbt/models dbt/snapshots dbt/tests dbt/analyses
+        run: sqlfluff lint infra/snowflake dbt/models dbt/snapshots dbt/tests dbt/analyses dashboards
 
       - name: Install dbt packages
         run: dbt deps

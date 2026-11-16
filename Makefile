@@ -15,7 +15,7 @@ PYTHON_BASE ?= C:/dev/python/cpython-3.11.16-windows-x86_64-none/python.exe
 PY   := $(VENV)/Scripts/python.exe
 DBT  := $(VENV)/Scripts/dbt.exe
 DBT_FLAGS := --project-dir dbt --profiles-dir dbt
-SQL_PATHS := infra/snowflake dbt/models dbt/snapshots dbt/tests dbt/analyses
+SQL_PATHS := infra/snowflake dbt/models dbt/snapshots dbt/tests dbt/analyses dashboards
 PY_PATHS  := ingestion scripts tests
 
 # Inside Airbnb London snapshots used by this project (decision D33).
