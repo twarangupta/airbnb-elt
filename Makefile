@@ -23,7 +23,7 @@ PY_PATHS  := ingestion scripts tests
 SNAPSHOT_OLD ?= 2026-06-19
 SNAPSHOT_NEW ?= 2026-09-17
 
-.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh
+.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh load-raw-new snapshot
 
 help:            ## List targets
 	@grep -E '^[a-z_-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ :/'
@@ -84,6 +84,13 @@ silver:          ## Build and test the Silver models (incremental where configur
 
 silver-full-refresh: ## Rebuild Silver from all of RAW (ignores incremental state)
 	$(DBT) build $(DBT_FLAGS) --select silver --full-refresh
+
+load-raw-new:    ## COPY the NEW London snapshot into RAW (Phase 4)
+	$(MAKE) load-raw SNAPSHOT_DATE=$(SNAPSHOT_NEW)
+
+snapshot:        ## SCD2 snapshot for ONE Inside Airbnb snapshot: make snapshot SNAPSHOT_DATE=YYYY-MM-DD (oldest first)
+	$(DBT) build $(DBT_FLAGS) --select stg_listings_current stg_hosts_current --vars "snapshot_date: $(SNAPSHOT_DATE)"
+	$(DBT) snapshot $(DBT_FLAGS) --vars "snapshot_date: $(SNAPSHOT_DATE)"
 
 ci:              ## Run the same checks as GitHub Actions, locally
 	$(MAKE) check-secrets lint pylint test deps

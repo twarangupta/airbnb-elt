@@ -1,0 +1,33 @@
+version: 2
+
+# SCD Type 2 history of listings and hosts.
+# Strategy CHECK: a new version is written only when one of check_cols
+# changes. NOT the timestamp strategy on last_scraped: last_scraped changes
+# on every scrape, so every row would look changed and the history would
+# mean nothing.
+# updated_at = snapshot_ts (the Inside Airbnb snapshot date), so
+# dbt_valid_from / dbt_valid_to are the dates the data describes.
+# hard_deletes = invalidate: a listing or host missing from a newer
+# snapshot gets dbt_valid_to set (it stopped being current).
+snapshots:
+  - name: snap_listings
+    relation: ref('stg_listings_current')
+    description: SCD Type 2 history of listings (one row per listing version).
+    config:
+      schema: snapshots
+      unique_key: listing_id
+      strategy: check
+      check_cols: [price, room_type, accommodates, minimum_nights, host_id]
+      updated_at: snapshot_ts
+      hard_deletes: invalidate
+
+  - name: snap_hosts
+    relation: ref('stg_hosts_current')
+    description: SCD Type 2 history of hosts (one row per host version).
+    config:
+      schema: snapshots
+      unique_key: host_id
+      strategy: check
+      check_cols: [is_superhost, host_listings_count, is_identity_verified, has_profile_pic]
+      updated_at: snapshot_ts
+      hard_deletes: invalidate
