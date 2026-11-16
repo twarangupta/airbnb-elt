@@ -4,7 +4,7 @@
 
 A batch ELT pipeline that loads Inside Airbnb listings, hosts, calendar and review data from AWS S3 into Snowflake, transforms it with dbt into Bronze, Silver and Gold layers and a star schema, keeps SCD Type 2 history of hosts and listings with dbt snapshots, and builds marts for price, availability and reviews per neighbourhood.
 
-Status: work in progress. Phase 3 done: dbt Silver layer (4 models, 2 incremental, 22 tests) built from the 2026-06-19 snapshot in 16 s on an X-SMALL warehouse; a rerun with no new data processes 0 rows in the incremental models. RAW load: 36,205,627 rows, reconciled exactly against landing counts.
+Status: work in progress. Phase 4 done: SCD Type 2 history of listings and hosts from two real Inside Airbnb snapshots (2026-06-19 and 2026-09-17): 47,154 of about 93,000 listings and 6,041 hosts changed, mostly price (45,897 listings) and minimum nights (10,915). Loading September through the incremental Silver models inserted 237,438 new reviews and 10.8 million new calendar dates and updated 22.8 million. RAW: 72,185,440 rows across two snapshots, reconciled exactly against landing counts.
 
 ## Architecture
 
@@ -43,7 +43,8 @@ scripts/            helper scripts (secret check)
 5. Land the raw files in S3 (needs AWS values in `.env`): `make land-old`
 6. Snowflake setup: run `infra/snowflake/01_setup.sql` to `03_raw_tables.sql` (see comments in each), then load and reconcile: `make load-raw-old`
 7. Build and test the Silver layer: `make silver` (check RAW age with `make freshness`)
-8. AWS setup: see [infra/aws/README.md](infra/aws/README.md).
+8. Record SCD Type 2 history, one Inside Airbnb snapshot at a time, oldest first: `make snapshot SNAPSHOT_DATE=2026-06-19`, then land and load `2026-09-17` (`make land-new`, `make load-raw-new`, `make silver`) and `make snapshot SNAPSHOT_DATE=2026-09-17`
+9. AWS setup: see [infra/aws/README.md](infra/aws/README.md).
 
 ## Data and licence
 
@@ -51,7 +52,7 @@ Data: [Inside Airbnb](https://insideairbnb.com/get-the-data/) (London, snapshots
 
 ## Roadmap
 
-- Phase 4: SCD Type 2 snapshots of hosts and listings across two snapshots.
+- Phase 4 (done): SCD Type 2 snapshots of hosts and listings across two snapshots.
 - Phase 5: Gold star schema and marts, plus a Snowsight dashboard (screenshots in `images/`).
 - After Phase 5: export the small Gold marts to `exports/gold/*.parquet` with a manifest (row counts, export time, source query), so results survive the Snowflake trial.
 - Phase 6 and 7: orchestration, docs and lineage, CI, interview write-up.
