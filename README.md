@@ -4,7 +4,7 @@
 
 A batch ELT pipeline that loads Inside Airbnb listings, hosts, calendar and review data from AWS S3 into Snowflake, transforms it with dbt into Bronze, Silver and Gold layers and a star schema, keeps SCD Type 2 history of hosts and listings with dbt snapshots, and builds marts for price, availability and reviews per neighbourhood.
 
-Status: work in progress. Phase 4 done: SCD Type 2 history of listings and hosts from two real Inside Airbnb snapshots (2026-06-19 and 2026-09-17): 47,154 of about 93,000 listings and 6,041 hosts changed, mostly price (45,897 listings) and minimum nights (10,915). Loading September through the incremental Silver models inserted 237,438 new reviews and 10.8 million new calendar dates and updated 22.8 million. RAW: 72,185,440 rows across two snapshots, reconciled exactly against landing counts.
+Status: work in progress. Phase 5 done: Gold star schema (3 dimensions, 2 facts) and 5 marts, built and tested in 35 s on an X-SMALL warehouse (36 tests). Every one of 2,478,791 reviews reaches the fact table; 2,286,305 of them predate the first snapshot and join to the listing version through a 1900-01-01 valid_from rule. Earlier phases: SCD Type 2 history (47,154 listings and 6,041 hosts changed between 2026-06-19 and 2026-09-17), incremental Silver, and 72,185,440 RAW rows reconciled against landing counts.
 
 ## Architecture
 
@@ -17,6 +17,37 @@ flowchart LR
   S --> G["GOLD: star schema and marts"]
   H --> G
 ```
+
+## Star schema (Gold)
+
+```mermaid
+erDiagram
+  DIM_DATE ||--o{ FCT_REVIEWS : "review_date_key"
+  DIM_LISTING ||--o{ FCT_REVIEWS : "listing version valid on review date"
+  DIM_HOST ||--o{ FCT_REVIEWS : "host version valid on review date"
+  DIM_DATE ||--o{ FCT_AVAILABILITY : "date_key"
+  DIM_LISTING ||--o{ FCT_AVAILABILITY : "listing version valid that night"
+  FCT_REVIEWS {
+    number review_id "GRAIN: one row per review"
+  }
+  FCT_AVAILABILITY {
+    number listing_id "GRAIN: one row per listing per date"
+    number date_key
+  }
+  DIM_LISTING {
+    string listing_key "one row per listing version (SCD2)"
+  }
+  DIM_HOST {
+    string host_key "one row per host version (SCD2)"
+  }
+  DIM_DATE {
+    number date_key "one row per day"
+  }
+```
+
+Facts join to the dimension version valid on the event date (point-in-time). Each key's first version starts at 1900-01-01 so events older than the first snapshot still join; unmatched facts go to an "unknown" member, and a test checks no review is lost. `fct_availability.nightly_price` comes from the listing version, because Inside Airbnb's calendar has no price.
+
+Marts: `mart_listing_reviews_monthly` (listing x month), `mart_neighbourhood_summary` (median price, unavailability rate, listings, reviews, rating per neighbourhood), and small dashboard marts `mart_reviews_monthly`, `mart_price_by_room_type`, `mart_scd_changes`. Prices use medians (outliers up to 527,524 a night); "unavailability rate" counts booked and host-blocked nights, so it is a demand proxy, not occupancy.
 
 ## Stack
 
@@ -44,7 +75,8 @@ scripts/            helper scripts (secret check)
 6. Snowflake setup: run `infra/snowflake/01_setup.sql` to `03_raw_tables.sql` (see comments in each), then load and reconcile: `make load-raw-old`
 7. Build and test the Silver layer: `make silver` (check RAW age with `make freshness`)
 8. Record SCD Type 2 history, one Inside Airbnb snapshot at a time, oldest first: `make snapshot SNAPSHOT_DATE=2026-06-19`, then land and load `2026-09-17` (`make land-new`, `make load-raw-new`, `make silver`) and `make snapshot SNAPSHOT_DATE=2026-09-17`
-9. AWS setup: see [infra/aws/README.md](infra/aws/README.md).
+9. Build and test the Gold star schema and marts: `make gold`
+10. AWS setup: see [infra/aws/README.md](infra/aws/README.md).
 
 ## Data and licence
 
@@ -53,7 +85,7 @@ Data: [Inside Airbnb](https://insideairbnb.com/get-the-data/) (London, snapshots
 ## Roadmap
 
 - Phase 4 (done): SCD Type 2 snapshots of hosts and listings across two snapshots.
-- Phase 5: Gold star schema and marts, plus a Snowsight dashboard (screenshots in `images/`).
+- Phase 5 (done): Gold star schema and marts. Next: a Snowsight dashboard (screenshots in `images/`).
 - After Phase 5: export the small Gold marts to `exports/gold/*.parquet` with a manifest (row counts, export time, source query), so results survive the Snowflake trial.
 - Phase 6 and 7: orchestration, docs and lineage, CI, interview write-up.
 - Final: a public Streamlit dashboard (separate repo) reading the exported files, with no warehouse credentials. Data: Inside Airbnb (CC BY 4.0).
