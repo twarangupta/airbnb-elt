@@ -6,7 +6,9 @@ dialect = snowflake
 templater = jinja
 max_line_length = 120
 # Keep the rule set small and explainable; grow it as models arrive.
-exclude_rules = LT05
+# ST06 (select-column order by type) is off: models list columns in a
+# logical order (keys, attributes, metrics, metadata) instead.
+exclude_rules = LT05, ST06
 
 [sqlfluff:templater:jinja]
 apply_dbt_builtins = True

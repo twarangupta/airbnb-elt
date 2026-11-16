@@ -23,7 +23,7 @@ PY_PATHS  := ingestion scripts tests
 SNAPSHOT_OLD ?= 2026-06-19
 SNAPSHOT_NEW ?= 2026-09-17
 
-.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old
+.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh
 
 help:            ## List targets
 	@grep -E '^[a-z_-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ :/'
@@ -75,6 +75,15 @@ load-raw:        ## COPY one landed snapshot into RAW: make load-raw SNAPSHOT_DA
 
 load-raw-old:    ## COPY the OLD London snapshot into RAW (Phase 2)
 	$(MAKE) load-raw SNAPSHOT_DATE=$(SNAPSHOT_OLD)
+
+freshness:       ## Check when RAW was last loaded (dbt source freshness)
+	$(DBT) source freshness $(DBT_FLAGS)
+
+silver:          ## Build and test the Silver models (incremental where configured)
+	$(DBT) build $(DBT_FLAGS) --select silver
+
+silver-full-refresh: ## Rebuild Silver from all of RAW (ignores incremental state)
+	$(DBT) build $(DBT_FLAGS) --select silver --full-refresh
 
 ci:              ## Run the same checks as GitHub Actions, locally
 	$(MAKE) check-secrets lint pylint test deps
