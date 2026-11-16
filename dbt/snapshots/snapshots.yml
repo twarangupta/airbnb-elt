@@ -20,6 +20,10 @@ snapshots:
       check_cols: [price, room_type, accommodates, minimum_nights, host_id]
       updated_at: snapshot_ts
       hard_deletes: invalidate
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [listing_id, dbt_valid_from]
 
   - name: snap_hosts
     relation: ref('stg_hosts_current')
@@ -31,3 +35,7 @@ snapshots:
       check_cols: [is_superhost, host_listings_count, is_identity_verified, has_profile_pic]
       updated_at: snapshot_ts
       hard_deletes: invalidate
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [host_id, dbt_valid_from]
