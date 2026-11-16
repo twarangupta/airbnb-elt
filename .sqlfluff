@@ -13,6 +13,8 @@ exclude_rules = LT05, ST06
 [sqlfluff:templater:jinja]
 apply_dbt_builtins = True
 load_macros_from_path = dbt/macros
+# Lint-only stand-ins for dbt_utils macros (see dbt/lint_stubs/dbt_utils).
+library_path = dbt/lint_stubs
 
 [sqlfluff:rules:capitalisation.keywords]
 capitalisation_policy = upper
