@@ -152,3 +152,18 @@ models:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns: [entity_type, metric_name]
+
+  - name: mart_city_kpis
+    description: >
+      GRAIN: one row for the whole city, newest snapshot (KPI tiles). City
+      median price computed from listings (medians cannot be combined from
+      neighbourhood medians); previous_* columns are the snapshot before.
+    columns:
+      - name: snapshot_date
+        data_tests: [unique, not_null]
+      - name: unavailability_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
