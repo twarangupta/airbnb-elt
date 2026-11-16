@@ -1,0 +1,154 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: "GRAIN: one row per calendar day, 2009-01-01 to 2027-12-31. date_key = YYYYMMDD."
+    columns:
+      - name: date_key
+        data_tests: [unique, not_null]
+
+  - name: dim_listing
+    description: >
+      GRAIN: one row per listing version (SCD Type 2 from snap_listings), plus
+      one unknown member (listing_id -1). Join facts on listing_id and
+      valid_from <= event date < valid_to. The first version of each listing
+      starts at 1900-01-01 so older events still join; the last version is
+      open-ended (9999-12-31). is_current marks versions still listed in the
+      newest snapshot.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [listing_id, valid_from]
+    columns:
+      - name: listing_key
+        description: Surrogate key (hash of listing_id and dbt_valid_from).
+        data_tests: [unique, not_null]
+      - name: listing_id
+        data_tests: [not_null]
+      - name: valid_from
+        data_tests: [not_null]
+      - name: valid_to
+        data_tests: [not_null]
+
+  - name: dim_host
+    description: >
+      GRAIN: one row per host version (SCD Type 2 from snap_hosts), plus one
+      unknown member (host_id -1). Same valid_from / valid_to rules as
+      dim_listing. host_name must not be published.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [host_id, valid_from]
+    columns:
+      - name: host_key
+        data_tests: [unique, not_null]
+      - name: host_id
+        data_tests: [not_null]
+
+  - name: fct_reviews
+    description: >
+      GRAIN: one row per review (review_id). listing_key and host_key point to
+      the listing and host versions valid on the review date (point-in-time
+      join); reviews whose listing is in no listings file get the unknown
+      member keys. Keyed by review_id so later per-review columns can join in.
+    columns:
+      - name: review_id
+        data_tests: [unique, not_null]
+      - name: review_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: listing_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_listing')
+                field: listing_key
+      - name: host_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_host')
+                field: host_key
+      - name: comment_length
+        data_tests: [not_null]
+
+  - name: fct_availability
+    description: >
+      GRAIN: one row per listing per calendar date (listing_id + date_key).
+      nightly_price is NOT from the calendar file (Inside Airbnb's calendar
+      has no price column); it is the price of the listing version valid on
+      that date (dim_listing, point-in-time join), NULL when the listing showed
+      no price. is_available = FALSE includes nights blocked by the host.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [listing_id, date_key]
+    columns:
+      - name: listing_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_listing')
+                field: listing_key
+      - name: date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: is_available
+        data_tests: [not_null]
+
+  - name: mart_listing_reviews_monthly
+    description: >
+      GRAIN: one row per listing per month with at least one review.
+      avg_review_score is the listing's overall rating from the version valid
+      at review time (Inside Airbnb has no per-review score).
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [listing_id, month_start_date]
+
+  - name: mart_neighbourhood_summary
+    description: >
+      GRAIN: one row per neighbourhood for the newest snapshot. Median price is
+      the headline (outliers); unavailability_rate is the share of unavailable
+      nights in the forward calendar, a proxy (includes host-blocked nights),
+      not occupancy.
+    columns:
+      - name: neighbourhood
+        data_tests: [unique, not_null]
+      - name: unavailability_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: mart_reviews_monthly
+    description: "GRAIN: one row per month, whole city."
+    columns:
+      - name: month_start_date
+        data_tests: [unique, not_null]
+
+  - name: mart_price_by_room_type
+    description: "GRAIN: one row per snapshot per room type; median and quartile prices."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [snapshot_date, room_type]
+
+  - name: mart_scd_changes
+    description: "GRAIN: one row per entity type (listing, host) per change metric between snapshots."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [entity_type, metric_name]
