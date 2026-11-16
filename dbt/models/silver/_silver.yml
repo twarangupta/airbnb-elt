@@ -1,0 +1,105 @@
+version: 2
+
+models:
+  - name: stg_listings
+    description: >
+      One row per listing per snapshot (grain: listing_id + snapshot_date),
+      typed and cleaned from RAW.LISTINGS. Price is a number (text such as
+      '$1,234.50' cleaned by the clean_price macro); about one third of
+      listings have no price in the 2026-06-19 snapshot.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [listing_id, snapshot_date]
+    columns:
+      - name: listing_id
+        description: Inside Airbnb listing id.
+        data_tests: [not_null]
+      - name: host_id
+        description: Owner of the listing; details in stg_hosts.
+        data_tests: [not_null]
+      - name: snapshot_date
+        description: Inside Airbnb snapshot the row comes from.
+        data_tests: [not_null]
+      - name: room_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Entire home/apt', 'Private room', 'Shared room', 'Hotel room']
+      - name: price
+        description: Nightly price in GBP as published in the snapshot; NULL when not shown.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: review_scores_rating
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+
+  - name: stg_hosts
+    description: >
+      One row per host per snapshot (grain: host_id + snapshot_date), taken
+      from the most recently scraped listing of that host. Several host
+      columns are entirely NULL in the 2026-06-19 snapshot (host_since,
+      response and acceptance rates, response time, total listings count).
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [host_id, snapshot_date]
+    columns:
+      - name: host_id
+        data_tests: [not_null]
+      - name: snapshot_date
+        data_tests: [not_null]
+
+  - name: stg_reviews
+    description: >
+      One row per review (grain: review_id). Incremental merge: each run adds
+      only reviews not seen before, from RAW rows loaded since the last run.
+      first_seen_snapshot_date is the snapshot a review first appeared in.
+      comment_length counts characters after turning <br/> tags into newlines.
+      Kept keyed by review_id so later per-review enrichment can join on it.
+    columns:
+      - name: review_id
+        data_tests: [unique, not_null]
+      - name: listing_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_listings')
+                field: listing_id
+              config:
+                # 4,270 reviews (121 listings) in the 2026-06-19 files belong to
+                # listings missing from listings.csv.gz; known source gap, so warn.
+                severity: warn
+      - name: review_date
+        data_tests: [not_null]
+      - name: comment_length
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+  - name: stg_calendar
+    description: >
+      One row per listing per date (grain: listing_id + calendar_date).
+      Incremental merge: a newer snapshot updates the dates it shares with
+      the older one and inserts new dates; source_snapshot_date shows which
+      snapshot each row comes from. No price column (not in the source).
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [listing_id, calendar_date]
+    columns:
+      - name: listing_id
+        data_tests: [not_null]
+      - name: calendar_date
+        data_tests: [not_null]
+      - name: is_available
+        data_tests: [not_null]
