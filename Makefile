@@ -23,7 +23,7 @@ PY_PATHS  := ingestion scripts tests
 SNAPSHOT_OLD ?= 2026-06-19
 SNAPSHOT_NEW ?= 2026-09-17
 
-.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh load-raw-new snapshot gold
+.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh load-raw-new snapshot gold export-gold
 
 help:            ## List targets
 	@grep -E '^[a-z_-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ :/'
@@ -94,6 +94,9 @@ snapshot:        ## SCD2 snapshot for ONE Inside Airbnb snapshot: make snapshot 
 
 gold:            ## Build and test the Gold star schema and marts
 	$(DBT) build $(DBT_FLAGS) --select gold assert_no_review_lost_in_gold
+
+export-gold:     ## Export the small Gold marts to exports/gold/*.parquet + manifest.json
+	$(PY) scripts/export_gold.py
 
 ci:              ## Run the same checks as GitHub Actions, locally
 	$(MAKE) check-secrets lint pylint test deps
