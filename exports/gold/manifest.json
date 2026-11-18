@@ -1,0 +1,93 @@
+{
+  "exported_at": "2026-11-18T08:32:46+00:00",
+  "attribution": "Data: Inside Airbnb (CC BY 4.0), London snapshots 2026-06-19 and 2026-09-17",
+  "source": "Snowflake AIRBNB.GOLD (dbt Gold layer)",
+  "tables": [
+    {
+      "table": "AIRBNB.GOLD.MART_CITY_KPIS",
+      "file": "exports/gold/mart_city_kpis.parquet",
+      "rows": 1,
+      "columns": [
+        "snapshot_date",
+        "active_listings",
+        "listings_with_price",
+        "median_price",
+        "active_hosts",
+        "unavailability_rate",
+        "total_reviews",
+        "reviews_last_12_months",
+        "previous_snapshot_date",
+        "previous_active_listings",
+        "previous_median_price"
+      ],
+      "bytes": 6854,
+      "sha256": "b3a2c2603effda3dbb99f15e5dcccb277d34ff19061f229acbe1ca6dc73c7da6",
+      "source_query": "SELECT * FROM AIRBNB.GOLD.MART_CITY_KPIS ORDER BY snapshot_date"
+    },
+    {
+      "table": "AIRBNB.GOLD.MART_NEIGHBOURHOOD_SUMMARY",
+      "file": "exports/gold/mart_neighbourhood_summary.parquet",
+      "rows": 33,
+      "columns": [
+        "neighbourhood",
+        "snapshot_date",
+        "active_listings",
+        "listings_with_price",
+        "median_price",
+        "avg_price",
+        "unavailability_rate",
+        "calendar_nights",
+        "review_count",
+        "reviews_last_12_months",
+        "avg_review_score"
+      ],
+      "bytes": 8356,
+      "sha256": "4bca8d6c11b7f0fd94fa041f9c5ab9753dcfa074c0f98bb1698c3478174cdbea",
+      "source_query": "SELECT * FROM AIRBNB.GOLD.MART_NEIGHBOURHOOD_SUMMARY ORDER BY neighbourhood"
+    },
+    {
+      "table": "AIRBNB.GOLD.MART_REVIEWS_MONTHLY",
+      "file": "exports/gold/mart_reviews_monthly.parquet",
+      "rows": 199,
+      "columns": [
+        "month_start_date",
+        "review_count",
+        "unique_reviewers",
+        "reviewed_listings"
+      ],
+      "bytes": 5815,
+      "sha256": "32f8d7469372917bbd317645fcefcfd70c5c239239ecd2147013dcb89d712197",
+      "source_query": "SELECT * FROM AIRBNB.GOLD.MART_REVIEWS_MONTHLY ORDER BY month_start_date"
+    },
+    {
+      "table": "AIRBNB.GOLD.MART_PRICE_BY_ROOM_TYPE",
+      "file": "exports/gold/mart_price_by_room_type.parquet",
+      "rows": 8,
+      "columns": [
+        "snapshot_date",
+        "room_type",
+        "listings",
+        "listings_with_price",
+        "median_price",
+        "p25_price",
+        "p75_price"
+      ],
+      "bytes": 4233,
+      "sha256": "21b7fcb0dd5d5478dee5c6602361827a796ef2381915f80f01ee8300ae46b06b",
+      "source_query": "SELECT * FROM AIRBNB.GOLD.MART_PRICE_BY_ROOM_TYPE ORDER BY snapshot_date, room_type"
+    },
+    {
+      "table": "AIRBNB.GOLD.MART_SCD_CHANGES",
+      "file": "exports/gold/mart_scd_changes.parquet",
+      "rows": 19,
+      "columns": [
+        "entity_type",
+        "metric_name",
+        "record_count"
+      ],
+      "bytes": 2576,
+      "sha256": "a57d94122a75be23c1f5eb401a9349df722d5df9a67e32fce7d5a010f4d45f28",
+      "source_query": "SELECT * FROM AIRBNB.GOLD.MART_SCD_CHANGES ORDER BY entity_type, metric_name"
+    }
+  ]
+}
