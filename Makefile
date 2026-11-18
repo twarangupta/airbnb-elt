@@ -1,6 +1,6 @@
 # One place for every command in this project.
 # Usage: make <target>   (run `make help` to list targets)
-# Grows phase by phase; Phase 6 adds `make all` (land, COPY INTO, dbt build).
+# `make run-all` runs the whole pipeline in order (scripts/run_pipeline.py).
 
 # Load .env (gitignored) and export every value to child processes (dbt, python).
 -include .env
@@ -23,7 +23,7 @@ PY_PATHS  := ingestion scripts tests
 SNAPSHOT_OLD ?= 2026-06-19
 SNAPSHOT_NEW ?= 2026-09-17
 
-.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh load-raw-new snapshot gold export-gold
+.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh load-raw-new snapshot gold export-gold run-all docs
 
 help:            ## List targets
 	@grep -E '^[a-z_-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ :/'
@@ -97,6 +97,12 @@ gold:            ## Build and test the Gold star schema and marts
 
 export-gold:     ## Export the small Gold marts to exports/gold/*.parquet + manifest.json
 	$(PY) scripts/export_gold.py
+
+run-all:         ## Whole pipeline, fail-fast, safe to rerun: land, COPY INTO, Silver, snapshots, Gold, export
+	$(PY) scripts/run_pipeline.py --snapshot-dates $(SNAPSHOT_OLD) $(SNAPSHOT_NEW)
+
+docs:            ## Generate dbt docs (dbt/target/index.html) and print the lineage summary
+	$(DBT) docs generate $(DBT_FLAGS)
 
 ci:              ## Run the same checks as GitHub Actions, locally
 	$(MAKE) check-secrets lint pylint test deps
