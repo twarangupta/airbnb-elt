@@ -4,7 +4,7 @@
 
 A batch ELT pipeline that loads Inside Airbnb listings, hosts, calendar and review data from AWS S3 into Snowflake, transforms it with dbt into Bronze, Silver and Gold layers and a star schema, keeps SCD Type 2 history of hosts and listings with dbt snapshots, and builds marts for price, availability and reviews per neighbourhood.
 
-Status: work in progress. Phase 5 done: Gold star schema (3 dimensions, 2 facts) and 5 marts, built and tested in 35 s on an X-SMALL warehouse (36 tests). Every one of 2,478,791 reviews reaches the fact table; 2,286,305 of them predate the first snapshot and join to the listing version through a 1900-01-01 valid_from rule. Earlier phases: SCD Type 2 history (47,154 listings and 6,041 hosts changed between 2026-06-19 and 2026-09-17), incremental Silver, and 72,185,440 RAW rows reconciled against landing counts.
+Status: work in progress. Phase 5 and the Snowsight dashboard done: Gold star schema (3 dimensions, 2 facts) and 5 marts, built and tested in 35 s on an X-SMALL warehouse (36 tests). Every one of 2,478,791 reviews reaches the fact table; 2,286,305 of them predate the first snapshot and join to the listing version through a 1900-01-01 valid_from rule. Earlier phases: SCD Type 2 history (47,154 listings and 6,041 hosts changed between 2026-06-19 and 2026-09-17), incremental Silver, and 72,185,440 RAW rows reconciled against landing counts.
 
 ## Architecture
 
@@ -49,6 +49,24 @@ Facts join to the dimension version valid on the event date (point-in-time). Eac
 
 Marts: `mart_listing_reviews_monthly` (listing x month), `mart_neighbourhood_summary` (median price, unavailability rate, listings, reviews, rating per neighbourhood), and small dashboard marts `mart_reviews_monthly`, `mart_price_by_room_type`, `mart_scd_changes`. Prices use medians (outliers up to 527,524 a night); "unavailability rate" counts booked and host-blocked nights, so it is a demand proxy, not occupancy.
 
+## Dashboard (Snowsight)
+
+A Snowsight dashboard on the Gold marts; every tile's SQL is in [`dashboards/snowsight/`](dashboards/snowsight/), and each tile reads a mart of 1 to 199 rows.
+
+![Dashboard: intro, active listings, median price and unavailable nights by neighbourhood](images/snowsight_dashboard_top.png)
+![Dashboard: reviews per month and median price by room type](images/snowsight_dashboard_middle.png)
+![Dashboard: price by room type and what changed between snapshots (SCD2)](images/snowsight_dashboard_bottom.png)
+
+What it shows (London, 2026-09-17 unless noted):
+- 91,954 active listings; city median price 175 a night (180 on 2026-06-19).
+- Median price by neighbourhood from about 282 (Westminster) to about 85 (Sutton).
+- Share of forward nights unavailable from about 72 percent (Hackney) to about 37 percent (Havering); unavailable includes host-blocked nights, so this is a demand proxy, not occupancy.
+- Reviews per month from 2015: the April 2020 lockdown drop, then a peak of 73,835 in July 2026 (September 2026 is partial).
+- Median price by room type, June vs September: entire home 239.50 to 227.00, hotel room 156.00 to 187.50, private room 82.27 to 80.00, shared room 44.00 to 36.00.
+- SCD2 changes: 47,154 listings and 6,041 hosts changed between the snapshots; 1,492 hosts became superhosts.
+
+Data: Inside Airbnb (CC BY 4.0).
+
 ## Stack
 
 AWS S3, Snowflake, dbt Core (dbt-snowflake, dbt_utils), Python 3.11, Make, GitHub Actions.
@@ -85,7 +103,7 @@ Data: [Inside Airbnb](https://insideairbnb.com/get-the-data/) (London, snapshots
 ## Roadmap
 
 - Phase 4 (done): SCD Type 2 snapshots of hosts and listings across two snapshots.
-- Phase 5 (done): Gold star schema and marts. Next: a Snowsight dashboard (screenshots in `images/`).
+- Phase 5 (done): Gold star schema and marts, plus a Snowsight dashboard (screenshots above).
 - After Phase 5: export the small Gold marts to `exports/gold/*.parquet` with a manifest (row counts, export time, source query), so results survive the Snowflake trial.
 - Phase 6 and 7: orchestration, docs and lineage, CI, interview write-up.
 - Final: a public Streamlit dashboard (separate repo) reading the exported files, with no warehouse credentials. Data: Inside Airbnb (CC BY 4.0).
