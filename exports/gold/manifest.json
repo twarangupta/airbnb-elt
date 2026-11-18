@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-11-18T08:32:46+00:00",
+  "exported_at": "2026-11-18T15:37:50+00:00",
   "attribution": "Data: Inside Airbnb (CC BY 4.0), London snapshots 2026-06-19 and 2026-09-17",
   "source": "Snowflake AIRBNB.GOLD (dbt Gold layer)",
   "tables": [
@@ -21,7 +21,8 @@
         "previous_median_price"
       ],
       "bytes": 6854,
-      "sha256": "b3a2c2603effda3dbb99f15e5dcccb277d34ff19061f229acbe1ca6dc73c7da6",
+      "sha256": "822bd2b5cc98e5635fbe0e0b8f8989b8ce19e3cd2bc2b00a5f46f802bea701f9",
+      "data_sha256": "6d65dd4cb1e6446001ff9cb73c20cb1b19356b95bd6c371dccc91b054a110666",
       "source_query": "SELECT * FROM AIRBNB.GOLD.MART_CITY_KPIS ORDER BY snapshot_date"
     },
     {
@@ -41,8 +42,9 @@
         "reviews_last_12_months",
         "avg_review_score"
       ],
-      "bytes": 8356,
-      "sha256": "4bca8d6c11b7f0fd94fa041f9c5ab9753dcfa074c0f98bb1698c3478174cdbea",
+      "bytes": 8364,
+      "sha256": "49f4db11729b119e7b2c07ec286ed03513727257284082afcefdf8c1cee98ecd",
+      "data_sha256": "23b4d420f7d4131b967b08bb93dda8d0884c62b399f1bf950dcc703b249239b3",
       "source_query": "SELECT * FROM AIRBNB.GOLD.MART_NEIGHBOURHOOD_SUMMARY ORDER BY neighbourhood"
     },
     {
@@ -55,8 +57,9 @@
         "unique_reviewers",
         "reviewed_listings"
       ],
-      "bytes": 5815,
-      "sha256": "32f8d7469372917bbd317645fcefcfd70c5c239239ecd2147013dcb89d712197",
+      "bytes": 5827,
+      "sha256": "ca3440803690fa33184250b58cbb0a0996dbe3ed057f4ebb8d47e7e461074321",
+      "data_sha256": "c904723eafa95f6cbf312b8ff1fc6deba18b60c7068ee352899e857a0c1c6e1e",
       "source_query": "SELECT * FROM AIRBNB.GOLD.MART_REVIEWS_MONTHLY ORDER BY month_start_date"
     },
     {
@@ -73,7 +76,8 @@
         "p75_price"
       ],
       "bytes": 4233,
-      "sha256": "21b7fcb0dd5d5478dee5c6602361827a796ef2381915f80f01ee8300ae46b06b",
+      "sha256": "c93e64ca044789c1b8068381b642d39eb335936985db13a752f44ad96b03c05b",
+      "data_sha256": "f2ea26867f08953147cc26b6037c07228343911c5077b6314035989bad4b998a",
       "source_query": "SELECT * FROM AIRBNB.GOLD.MART_PRICE_BY_ROOM_TYPE ORDER BY snapshot_date, room_type"
     },
     {
@@ -86,7 +90,8 @@
         "record_count"
       ],
       "bytes": 2576,
-      "sha256": "a57d94122a75be23c1f5eb401a9349df722d5df9a67e32fce7d5a010f4d45f28",
+      "sha256": "1cf3f1ecc15bc74b7b26efa830117f4d443b5ed776b5a4ee619f18958fd61105",
+      "data_sha256": "fe931383c3e993d4177a8b13a7cf85c45226c261a6bec53230914975368a963e",
       "source_query": "SELECT * FROM AIRBNB.GOLD.MART_SCD_CHANGES ORDER BY entity_type, metric_name"
     }
   ]

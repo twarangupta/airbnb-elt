@@ -44,7 +44,17 @@ def sha256_of(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def manifest_entry(mart: str, query: str, rows: int, columns: list[str], path: Path) -> dict:
+def data_sha256(table) -> str:
+    """Fingerprint of a table's DATA (not of the Parquet bytes).
+
+    Parquet writers do not always produce identical bytes for identical data,
+    so change detection uses the rows themselves, serialised deterministically.
+    """
+    rows = json.dumps(table.to_pylist(), default=str, sort_keys=True)
+    return hashlib.sha256(rows.encode("utf-8")).hexdigest()
+
+
+def manifest_entry(mart: str, query: str, rows: int, columns: list[str], path: Path, data_hash: str) -> dict:
     return {
         "table": f"AIRBNB.GOLD.{mart.upper()}",
         "file": path.relative_to(REPO_ROOT).as_posix(),
@@ -52,8 +62,38 @@ def manifest_entry(mart: str, query: str, rows: int, columns: list[str], path: P
         "columns": columns,
         "bytes": path.stat().st_size,
         "sha256": sha256_of(path),
+        "data_sha256": data_hash,
         "source_query": query,
     }
+
+
+def unchanged(data_hashes: dict[str, str], manifest_path: Path) -> bool:
+    """True if every mart's data fingerprint matches the existing manifest.
+
+    Then nothing is written (no files, no new exported_at), so rerunning the
+    pipeline with no new data changes nothing in the repo.
+    """
+    if not manifest_path.exists():
+        return False
+    old = json.loads(manifest_path.read_text(encoding="utf-8"))
+    old_hashes = {t["table"]: t.get("data_sha256") for t in old.get("tables", [])}
+    return old_hashes == data_hashes
+
+
+def suspend_warehouse(cur, name: str = "AIRBNB_WH") -> None:
+    """Suspend the warehouse; 'already suspended' is fine, not an error.
+
+    Snowflake raises error 090064 ("Invalid state ... cannot be suspended") when
+    the warehouse is already asleep, e.g. when every query was answered from
+    the result cache without waking it.
+    """
+    from snowflake.connector.errors import ProgrammingError
+
+    try:
+        cur.execute(f"ALTER WAREHOUSE {name} SUSPEND")
+    except ProgrammingError as exc:
+        if exc.errno != 90064:
+            raise
 
 
 def main() -> int:
@@ -73,7 +113,7 @@ def main() -> int:
         warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE", "AIRBNB_WH"),
         session_parameters={"QUERY_TAG": "airbnb_elt_export"},
     )
-    entries = []
+    tables = {}
     try:
         cur = conn.cursor()
         for mart, order_by in MARTS.items():
@@ -82,15 +122,24 @@ def main() -> int:
             if table is None or table.num_rows > MAX_ROWS:
                 print(f"{mart}: refusing to export ({0 if table is None else table.num_rows} rows)", file=sys.stderr)
                 return 1
-            table = table.rename_columns([c.lower() for c in table.column_names])
-            path = EXPORT_DIR / f"{mart}.parquet"
-            pq.write_table(table, path, compression="zstd")
-            entries.append(manifest_entry(mart, query, table.num_rows, table.column_names, path))
-            relative = path.relative_to(REPO_ROOT).as_posix()
-            print(f"{mart}: {table.num_rows} rows -> {relative} ({path.stat().st_size:,} bytes)")
-        cur.execute("ALTER WAREHOUSE AIRBNB_WH SUSPEND")
+            tables[mart] = (query, table.rename_columns([c.lower() for c in table.column_names]))
+        suspend_warehouse(cur)
     finally:
         conn.close()
+
+    data_hashes = {f"AIRBNB.GOLD.{m.upper()}": data_sha256(t) for m, (_, t) in tables.items()}
+    if unchanged(data_hashes, EXPORT_DIR / "manifest.json"):
+        print("export: Gold data unchanged since the last export; no files written")
+        return 0
+
+    entries = []
+    for mart, (query, table) in tables.items():
+        path = EXPORT_DIR / f"{mart}.parquet"
+        pq.write_table(table, path, compression="zstd")
+        data_hash = data_hashes[f"AIRBNB.GOLD.{mart.upper()}"]
+        entries.append(manifest_entry(mart, query, table.num_rows, table.column_names, path, data_hash))
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        print(f"{mart}: {table.num_rows} rows -> {relative} ({path.stat().st_size:,} bytes)")
 
     manifest = {
         "exported_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
@@ -98,7 +147,8 @@ def main() -> int:
         "source": "Snowflake AIRBNB.GOLD (dbt Gold layer)",
         "tables": entries,
     }
-    (EXPORT_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8")
+    manifest_text = json.dumps(manifest, indent=2, default=str) + "\n"
+    (EXPORT_DIR / "manifest.json").write_text(manifest_text, encoding="utf-8")
     total = sum(e["bytes"] for e in entries)
     print(f"manifest: exports/gold/manifest.json ({len(entries)} tables, {total:,} bytes in Parquet)")
     return 0

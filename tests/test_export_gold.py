@@ -31,14 +31,35 @@ def test_manifest_entry(tmp_path, monkeypatch):
     path = tmp_path / "exports" / "gold" / "x.parquet"
     path.parent.mkdir(parents=True)
     path.write_bytes(b"abc")
-    entry = export_gold.manifest_entry("mart_x", "SELECT 1", 3, ["a", "b"], path)
+    entry = export_gold.manifest_entry("mart_x", "SELECT 1", 3, ["a", "b"], path, "d")
     assert entry["file"] == "exports/gold/x.parquet"
     assert entry["rows"] == 3
     assert entry["bytes"] == 3
     assert entry["sha256"] == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     assert entry["table"] == "AIRBNB.GOLD.MART_X"
+    assert entry["data_sha256"] == "d"
 
 
 def test_attribution_names_the_licence():
     assert "Inside Airbnb" in export_gold.ATTRIBUTION
     assert "CC BY 4.0" in export_gold.ATTRIBUTION
+
+
+def test_unchanged_compares_data_fingerprints(tmp_path):
+    import json
+
+    manifest = tmp_path / "manifest.json"
+    hashes = {"AIRBNB.GOLD.MART_A": "abc"}
+    assert not export_gold.unchanged(hashes, manifest)  # no manifest yet
+    old = {"tables": [{"table": "AIRBNB.GOLD.MART_A", "data_sha256": "abc"}]}
+    manifest.write_text(json.dumps(old), encoding="utf-8")
+    assert export_gold.unchanged(hashes, manifest)
+    assert not export_gold.unchanged({"AIRBNB.GOLD.MART_A": "xyz"}, manifest)
+
+
+def test_data_sha256_ignores_file_encoding():
+    import pyarrow as pa
+
+    a = pa.table({"x": [1, 2], "y": ["a", "b"]})
+    b = pa.concat_tables([a.slice(0, 1), a.slice(1, 1)])  # same data, different chunks
+    assert export_gold.data_sha256(a) == export_gold.data_sha256(b)
