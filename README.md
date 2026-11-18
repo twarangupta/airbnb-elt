@@ -55,7 +55,7 @@ A Snowsight dashboard on the Gold marts; every tile's SQL is in [`dashboards/sno
 
 ![Dashboard: intro, active listings, median price and unavailable nights by neighbourhood](images/snowsight_dashboard_top.png)
 ![Dashboard: reviews per month and median price by room type](images/snowsight_dashboard_middle.png)
-![Dashboard: price by room type and what changed between snapshots (SCD2)](images/snowsight_dashboard_bottom.png)
+![Dashboard: what changed between the June and September snapshots (SCD2)](images/snowsight_dashboard_bottom.png)
 
 What it shows (London, 2026-09-17 unless noted):
 - 91,954 active listings; city median price 175 a night (180 on 2026-06-19).
