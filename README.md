@@ -102,8 +102,7 @@ Data: [Inside Airbnb](https://insideairbnb.com/get-the-data/) (London, snapshots
 
 ## Roadmap
 
-- Phase 4 (done): SCD Type 2 snapshots of hosts and listings across two snapshots.
-- Phase 5 (done): Gold star schema and marts, plus a Snowsight dashboard (screenshots above).
-- After Phase 5: export the small Gold marts to `exports/gold/*.parquet` with a manifest (row counts, export time, source query), so results survive the Snowflake trial.
-- Phase 6 and 7: orchestration, docs and lineage, CI, interview write-up.
-- Final: a public Streamlit dashboard (separate repo) reading the exported files, with no warehouse credentials. Data: Inside Airbnb (CC BY 4.0).
+- Done: S3 landing, RAW load, Silver (dbt), SCD Type 2 snapshots, Gold star schema and marts, Snowsight dashboard.
+- Done: small Gold marts exported to `exports/gold/*.parquet` with a manifest (row counts, sha256, export time, source query), so results survive the Snowflake trial.
+- Done: Streamlit dashboard in `dashboards/streamlit/app.py` that reads those files, with no warehouse credentials. Data: Inside Airbnb (CC BY 4.0).
+- Next: Phase 6 (orchestration, dbt docs and lineage, CI) and Phase 7 (interview write-up).
