@@ -47,7 +47,7 @@ jobs:
         run: python scripts/check_secrets.py
 
       - name: Lint Python with ruff
-        run: ruff check ingestion scripts tests
+        run: ruff check ingestion scripts tests dashboards/streamlit
 
       - name: Run Python unit tests
         run: python -m pytest -q tests
