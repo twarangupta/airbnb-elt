@@ -2,6 +2,8 @@
 
 [![ci](https://github.com/twarangupta/airbnb-elt/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/twarangupta/airbnb-elt/actions/workflows/ci.yml)
 
+**Live dashboard:** [airbnb-london-elt.streamlit.app](https://airbnb-london-elt.streamlit.app/) (Streamlit, reads the exported Gold marts; no warehouse needed)
+
 A batch ELT pipeline that loads Inside Airbnb listings, hosts, calendar and review data from AWS S3 into Snowflake, transforms it with dbt into Bronze, Silver and Gold layers and a star schema, keeps SCD Type 2 history of hosts and listings with dbt snapshots, and builds marts for price, availability and reviews per neighbourhood.
 
 Status: work in progress. Phase 5 and the Snowsight dashboard done: Gold star schema (3 dimensions, 2 facts) and 5 marts, built and tested in 35 s on an X-SMALL warehouse (36 tests). Every one of 2,478,791 reviews reaches the fact table; 2,286,305 of them predate the first snapshot and join to the listing version through a 1900-01-01 valid_from rule. Earlier phases: SCD Type 2 history (47,154 listings and 6,041 hosts changed between 2026-06-19 and 2026-09-17), incremental Silver, and 72,185,440 RAW rows reconciled against landing counts.
@@ -104,5 +106,5 @@ Data: [Inside Airbnb](https://insideairbnb.com/get-the-data/) (London, snapshots
 
 - Done: S3 landing, RAW load, Silver (dbt), SCD Type 2 snapshots, Gold star schema and marts, Snowsight dashboard.
 - Done: small Gold marts exported to `exports/gold/*.parquet` with a manifest (row counts, sha256, export time, source query), so results survive the Snowflake trial.
-- Done: Streamlit dashboard in `dashboards/streamlit/app.py` that reads those files, with no warehouse credentials. Data: Inside Airbnb (CC BY 4.0).
+- Done: Streamlit dashboard in `dashboards/streamlit/app.py`, live at https://airbnb-london-elt.streamlit.app/, that reads those files, with no warehouse credentials. Data: Inside Airbnb (CC BY 4.0).
 - Next: Phase 6 (orchestration, dbt docs and lineage, CI) and Phase 7 (interview write-up).
