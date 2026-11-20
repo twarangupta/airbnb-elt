@@ -23,7 +23,7 @@ PY_PATHS  := ingestion scripts tests
 SNAPSHOT_OLD ?= 2026-06-19
 SNAPSHOT_NEW ?= 2026-09-17
 
-.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh load-raw-new snapshot gold export-gold run-all docs
+.PHONY: help venv install deps parse debug clean lint pylint test check-secrets ci land land-old land-new keypair load-raw load-raw-old freshness silver silver-full-refresh load-raw-new snapshot gold export-gold run-all docs lineage
 
 help:            ## List targets
 	@grep -E '^[a-z_-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ :/'
@@ -103,6 +103,10 @@ run-all:         ## Whole pipeline, fail-fast, safe to rerun: land, COPY INTO, S
 
 docs:            ## Generate dbt docs (dbt/target/index.html) and print the lineage summary
 	$(DBT) docs generate $(DBT_FLAGS)
+
+lineage:         ## Print the dbt lineage (sources, models, snapshots) as Mermaid, from dbt's manifest
+	$(DBT) parse $(DBT_FLAGS) --quiet
+	$(PY) scripts/lineage_mermaid.py
 
 ci:              ## Run the same checks as GitHub Actions, locally
 	$(MAKE) check-secrets lint pylint test deps
